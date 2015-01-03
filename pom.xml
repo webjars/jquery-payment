@@ -11,7 +11,7 @@
     <packaging>jar</packaging>
     <groupId>org.webjars</groupId>
     <artifactId>jquery-payment</artifactId>
-    <version>v1.1.4</version>
+    <version>1.1.4-SNAPSHOT</version>
     <name>jquery-payment</name>
     <description>WebJar for jquery payment plugin</description>
     <url>http://webjars.org</url>
@@ -41,11 +41,19 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <upstream.version>v1.1.4</upstream.version>
-        <upstream.directory>jquery.payment-${upstream.version}</upstream.directory>
-        <upstream.file>${upstream.version}.zip</upstream.file>
-        <upstream.url>https://github.com/stripe/jquery.payment/archive</upstream.url>
-        <destDir>${project.build.outputDirectory}/META-INF/resources/webjars/${project.artifactId}/${upstream.version}</destDir>
+        <upstream.version>1.1.4</upstream.version>
+        <upstream.url>https://raw.githubusercontent.com/stripe/jquery.payment/v${upstream.version}/lib</upstream.url>
+        <destDir>${project.build.outputDirectory}/META-INF/resources/webjars/${project.artifactId}/${project.version}</destDir>
+        <requirejs>
+            {
+                "paths": {
+                    "jquery-payment": "jquery.payment"
+                },
+                "shim": {
+                    "jquery-payment": ["jquery"]
+                }
+            }
+        </requirejs>
     </properties>
 
 	<dependencies>
@@ -59,24 +67,7 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>wagon-maven-plugin</artifactId>
-                <version>1.0-beta-4</version>
-                <executions>
-                    <execution>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>download-single</goal>
-                        </goals>
-                        <configuration>
-                            <url>${upstream.url}</url>
-                            <fromFile>${upstream.file}</fromFile>
-                            <toFile>${project.build.directory}/${project.artifactId}.zip</toFile>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-antrun-plugin</artifactId>
                 <version>1.7</version>
                 <executions>
@@ -85,43 +76,30 @@
                         <goals><goal>run</goal></goals>
                         <configuration>
                             <target>
-                                <echo message="unzip archive and zip files" />
-                                <unzip src="${project.build.directory}/${project.artifactId}.zip" dest="${destDir}">
-                                    <patternset>
-										<exclude name="jquery.payment-1.1.4/src/**" />
-										<exclude name="jquery.payment-1.1.4/example/**" />
-										<exclude name="jquery.payment-1.1.4/test/**" />
-                                        <exclude name="jquery.payment-1.1.4/README.md" />
-										<exclude name="jquery.payment-1.1.4/package.json" />
-										<exclude name="jquery.payment-1.1.4/gulpfile.js" />
-										<exclude name="jquery.payment-1.1.4/index.html" />
-										<exclude name="jquery.payment-1.1.4/.gitignore" />
-										<exclude name="jquery.payment-1.1.4/.travis.yml" />
-										<exclude name="jquery.payment-1.1.4/bower.json" />
-										<exclude name="jquery.payment-1.1.4/payment.jquery.json" />
-										<exclude name="jquery.payment-1.1.4/LICENSE" />
-										<exclude name="jquery.payment-1.1.4/Cakefile" />
-                                    </patternset>
-                                    <mapper>
-                                        <!-- Strip leading directory off each path -->
-                                        <!-- So "xxx/docs/index.html" becomes "docs/index.html" -->
-                                        <cutdirsmapper dirs="1" />
-                                    </mapper>
-                                </unzip>
-                                <echo message="unzip done" />
-								<echo message="moving resources" />
-                                <move todir="${destDir}">
-                                    <fileset dir="${destDir}/lib/" />
-                                </move>
+                                <mkdir dir="${destDir}" />
+                                <get src="${upstream.url}/jquery.payment.js" dest="${destDir}" />
                             </target>
                         </configuration>
                     </execution>
                 </executions>
             </plugin>
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.3.2</version>
+                <version>2.5.1</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.2</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>sonatype-nexus-staging</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
             </plugin>
         </plugins>
     </build>
